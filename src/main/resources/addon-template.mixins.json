@@ -1,9 +1,12 @@
 {
   "required": true,
-  "package": "com.example.addon.mixin",
+  "package": "xyz.hsbestudio.tools.mixin",
   "compatibilityLevel": "JAVA_17",
   "client": [],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "mixins": [
+    "WindowMixin"
+  ]
 }

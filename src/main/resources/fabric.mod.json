@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "id": "addon-template",
+  "id": "dinner-tools",
   "version": "${version}",
-  "name": "Addon Template",
-  "description": "An addon template for the Meteor addons.",
+  "name": "06ED's tools",
+  "description": "Cute pvp based meteor addon",
   "authors": [
-    "seasnail"
+    "06ED"
   ],
   "contact": {
     "repo": "https://github.com/MeteorDevelopment/meteor-addon-template"
   },
-  "icon": "assets/template/icon.png",
+  "icon": "assets/tools/icon.png",
   "environment": "client",
   "entrypoints": {
     "meteor": [
-      "com.example.addon.Addon"
+      "xyz.hsbestudio.tools.DinnerTools"
     ]
   },
   "mixins": [
