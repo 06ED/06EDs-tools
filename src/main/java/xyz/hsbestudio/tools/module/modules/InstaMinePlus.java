@@ -19,6 +19,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import xyz.hsbestudio.tools.DinnerTools;
+import xyz.hsbestudio.tools.utils.WorldUtils;
 
 public class InstaMinePlus extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
@@ -176,6 +177,7 @@ public class InstaMinePlus extends Module {
     }
 
     @EventHandler
+    @SuppressWarnings("unused")
     private void onTick(TickEvent.Pre event) {
         if (mc.world == null || mc.getNetworkHandler() == null) return;
 
@@ -205,9 +207,7 @@ public class InstaMinePlus extends Module {
                 mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
 
             }
-        } else {
-            ticks++;
-        }
+        } else ticks++;
     }
 
     private boolean shouldMine() {
@@ -220,8 +220,9 @@ public class InstaMinePlus extends Module {
     }
 
     @EventHandler
+    @SuppressWarnings("unused")
     private void onRender(Render3DEvent event) {
-        if (!render.get() || (!shouldMine() && !renderAlways.get())) return;
+        if (!render.get() || (!shouldMine() && !renderAlways.get()) && WorldUtils.getBlock(blockPos) == Blocks.BEDROCK) return;
         event.renderer.box(blockPos, sideColor.get(), lineColor.get(), shapeMode.get(), 0);
     }
 }

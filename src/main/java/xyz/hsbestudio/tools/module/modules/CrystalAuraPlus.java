@@ -1209,6 +1209,7 @@ public class CrystalAuraPlus extends Module {
     }
 
     @EventHandler
+    @SuppressWarnings("unused")
     private void onEntityRemoved(EntityRemovedEvent event) {
         if (event.entity instanceof EndCrystalEntity) {
             placedCrystals.remove(event.entity.getId());
@@ -1358,6 +1359,7 @@ public class CrystalAuraPlus extends Module {
     }
 
     @EventHandler
+    @SuppressWarnings("unused")
     private void onPacketSend(PacketEvent.Send event) {
         if (event.packet instanceof UpdateSelectedSlotC2SPacket) {
             switchTimer = switchDelay.get();
@@ -1557,6 +1559,7 @@ public class CrystalAuraPlus extends Module {
     // Yaw steps
 
     @EventHandler
+    @SuppressWarnings("unused")
     private void onPacketSent(PacketEvent.Sent event) {
         if (event.packet instanceof PlayerMoveC2SPacket) {
             serverYaw = ((PlayerMoveC2SPacket) event.packet).getYaw((float) serverYaw);
@@ -1678,6 +1681,7 @@ public class CrystalAuraPlus extends Module {
     }
 
     @EventHandler
+    @SuppressWarnings("unused")
     private void onReceivePacket(PacketEvent.Receive event) {
         if (!(event.packet instanceof EntityStatusS2CPacket p)) return;
 
@@ -1694,6 +1698,7 @@ public class CrystalAuraPlus extends Module {
     }
 
     @EventHandler(priority = EventPriority.LOWEST - 1000)
+    @SuppressWarnings("unused")
     private void onTick(TickEvent.Post event) {
         if (debug.get()) {
             if (CrystalUtils.isFacePlacing() && bestTarget != null && bestTarget.getY() < placingCrystalBlockPos.getY()) {
@@ -1711,6 +1716,7 @@ public class CrystalAuraPlus extends Module {
 
     // Render
     @EventHandler
+    @SuppressWarnings("unused")
     private void onRender(Render3DEvent event) {
         if (renderMode.get() == RenderMode.Fade) {
             renderBlocks.sort(Comparator.comparingInt(o -> -o.ticks));
@@ -1776,6 +1782,7 @@ public class CrystalAuraPlus extends Module {
     }
 
     @EventHandler
+    @SuppressWarnings("unused")
     private void onRender2D(Render2DEvent event) {
         if (renderMode.get() == RenderMode.None || renderTimer <= 0 || !renderDamage.get()) return;
 

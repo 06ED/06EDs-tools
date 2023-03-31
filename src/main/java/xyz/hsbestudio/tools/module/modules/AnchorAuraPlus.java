@@ -143,7 +143,7 @@ public class AnchorAuraPlus extends Module {
 
     private int placeDelayLeft;
     private int breakDelayLeft;
-    private PlayerEntity target;
+    public PlayerEntity target;
     private boolean sentTrapMine;
     private boolean sentBurrowMine;
     private boolean sentAntiStuck;
