@@ -1,8 +1,16 @@
-# Meteor Addon Template
+# 06ED's tools
+![](src/main/resources/assets/tools/icon.png)
+## Based meteor pvp addon
 
-A template to allow easy usage of the Meteor Addon API.
-
-### How to use:  
-- Clone this project
-- Use this template to create new modules/commands
-- Run the mod with Meteor.
+### Modules
+- AnchorAura+
+- CrystalAura+
+- TntAura
+- CevBreaker
+- Surround+
+- InstaMine+
+- ArmorNotifier
+- Prefix
+- RadiusAutoWalk
+- RPC
+- FastThrowXP

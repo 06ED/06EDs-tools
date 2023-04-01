@@ -1,6 +1,8 @@
 package xyz.hsbestudio.tools.module.modules;
 
+import meteordevelopment.meteorclient.events.render.Render3DEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
+import meteordevelopment.meteorclient.renderer.ShapeMode;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.entity.SortPriority;
@@ -8,19 +10,23 @@ import meteordevelopment.meteorclient.utils.entity.TargetUtils;
 import meteordevelopment.meteorclient.utils.player.FindItemResult;
 import meteordevelopment.meteorclient.utils.player.InvUtils;
 import meteordevelopment.meteorclient.utils.player.PlayerUtils;
+import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import meteordevelopment.meteorclient.utils.world.BlockUtils;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Items;
+import net.minecraft.item.PickaxeItem;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import xyz.hsbestudio.tools.DinnerTools;
+import xyz.hsbestudio.tools.utils.PlayerUtilsPlus;
 import xyz.hsbestudio.tools.utils.WorldUtils;
+import xyz.hsbestudio.tools.utils.WrapUtils;
 
 import java.util.List;
 
@@ -28,6 +34,8 @@ public class TntAura extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
     private final SettingGroup sgTrap = settings.createGroup("Trap");
     private final SettingGroup sgPause = settings.createGroup("Pause");
+    private final SettingGroup sgRender = settings.createGroup("Render");
+    private final SettingGroup sgPlaceAndBlownUp = settings.createGroup("Place & Blown up");
 
     private final Setting<SortPriority> targetPriority = sgGeneral.add(new EnumSetting.Builder<SortPriority>()
         .name("target-priority")
@@ -43,8 +51,15 @@ public class TntAura extends Module {
         .defaultValue(4)
         .build()
     );
+    private final Setting<Boolean> antiStuck = sgGeneral.add(new BoolSetting.Builder()
+        .name("anti-stuck")
+        .description("Prevent getting stuck when enemy placed block above his head")
+        .defaultValue(true)
+        .build()
+    );
 
-    private final Setting<Integer> placeDelay = sgGeneral.add(new IntSetting.Builder()
+    // Place & Blown up
+    private final Setting<Integer> placeDelay = sgPlaceAndBlownUp.add(new IntSetting.Builder()
         .name("place-delay")
         .description("The tick delay between placing tnt.")
         .max(20)
@@ -52,7 +67,7 @@ public class TntAura extends Module {
         .defaultValue(3)
         .build()
     );
-    private final Setting<Integer> blownUpDelay = sgGeneral.add(new IntSetting.Builder()
+    private final Setting<Integer> blownUpDelay = sgPlaceAndBlownUp.add(new IntSetting.Builder()
         .name("blown-up-delay")
         .description("The tick delay between placing tnt.")
         .max(20)
@@ -104,6 +119,58 @@ public class TntAura extends Module {
         .build()
     );
 
+    // Render
+    private final Setting<Boolean> renderTnt = sgRender.add(new BoolSetting.Builder()
+        .name("render-tnt")
+        .description("Is tnt block pos will be render.")
+        .defaultValue(true)
+        .build()
+    );
+    private final Setting<ShapeMode> tntShapeMode = sgRender.add(new EnumSetting.Builder<ShapeMode>()
+        .name("tnt-shape-mode")
+        .description("How the tnt shapes are rendered.")
+        .defaultValue(ShapeMode.Both)
+        .visible(renderTnt::get)
+        .build()
+    );
+    private final Setting<SettingColor> tntSideColor = sgRender.add(new ColorSetting.Builder()
+        .name("tnt-side-color")
+        .description("Color of side block, where tnt will be placed")
+        .visible(renderTnt::get)
+        .build()
+    );
+    private final Setting<SettingColor> tntLineColor = sgRender.add(new ColorSetting.Builder()
+        .name("tnt-line-color")
+        .description("Color of line block, where tnt will be placed")
+        .visible(renderTnt::get)
+        .build()
+    );
+    private final Setting<Boolean> renderTrap = sgRender.add(new BoolSetting.Builder()
+        .name("render-trap")
+        .description("Is trap blocks pos will be render.")
+        .defaultValue(true)
+        .build()
+    );
+    private final Setting<ShapeMode> trapShapeMode = sgRender.add(new EnumSetting.Builder<ShapeMode>()
+        .name("trap-shape-mode")
+        .description("How the trap shapes are rendered.")
+        .defaultValue(ShapeMode.Lines)
+        .visible(renderTrap::get)
+        .build()
+    );
+    private final Setting<SettingColor> trapSideColor = sgRender.add(new ColorSetting.Builder()
+        .name("trap-side-color")
+        .description("Color of side block, where trap are placed")
+        .visible(renderTrap::get)
+        .build()
+    );
+    private final Setting<SettingColor> trapLineColor = sgRender.add(new ColorSetting.Builder()
+        .name("trap-line-color")
+        .description("Color of line block, where trap are placed")
+        .visible(renderTrap::get)
+        .build()
+    );
+
     public TntAura() {
         super(DinnerTools.CATEGORY, "TNT-aura", "Automatically traps player and blown up him by tnt.");
     }
@@ -126,24 +193,76 @@ public class TntAura extends Module {
     @EventHandler
     @SuppressWarnings("unused")
     private void onTick(TickEvent.Post event) {
-        if (PlayerUtils.shouldPause(pauseOnMine.get(), pauseOnEat.get(), pauseOnDrink.get())) return;
+        // Choosing target
         if (target == null) {
             target = TargetUtils.getPlayerTarget(range.get(), targetPriority.get());
             structure = null;
             return;
         }
+
+        if (PlayerUtils.shouldPause(pauseOnMine.get(), pauseOnEat.get(), pauseOnDrink.get())) return;
+
+        // Anti stuck
+        BlockPos tntPos = new BlockPos(target.getPos()).up(2);
+        if (antiStuck.get() && WorldUtils.getBlock(tntPos) != Blocks.TNT) breakBlock(tntPos);
+
         if (structure == null) structure = new TrapStructure(target, blockList.get());
 
+        // Building trap structure
         if (trapDelay.get() == tickTrapDelay || trapDelay.get() == 0 && trap.get()) {
             structure.build(true);
             tickTrapDelay = 0;
         }
-        BlockPos tntPos = new BlockPos(target.getPos()).add(0, 2, 0);
+        // Place tnt
         if (placeDelay.get() == tickPlaceDelay || placeDelay.get() == 0) placeTnt(tntPos);
+        // Blown up tnt
         if (blownUpDelay.get() == tickBlownUpDelay || blownUpDelay.get() == 0) blownUpTnt(tntPos);
 
+        // Checking and removing target if it is bad
         if (TargetUtils.isBadTarget(target, range.get())) target = null;
         updateTickCounter();
+    }
+
+    @EventHandler
+    @SuppressWarnings("unused")
+    private void onRender(Render3DEvent event) {
+        if (target == null) return;
+
+        if (renderTnt.get())
+            event.renderer.box(new BlockPos(target.getPos()).up(2), tntSideColor.get(), tntLineColor.get(), tntShapeMode.get(), 0);
+
+        if (renderTrap.get())
+            for (int i = 0; i < 3; i++) {
+                double x = target.getX();
+                double z = target.getZ();
+                double y = target.getY();
+
+                List<BlockPos> surroundPoses = List.of(
+                    new BlockPos(x + 1, y + i, z),
+                    new BlockPos(x - 1, y + i, z),
+                    new BlockPos(x, y + i, z + 1),
+                    new BlockPos(x, y + i, z - 1)
+                );
+
+                for (BlockPos pos : surroundPoses) {
+                    Block block = WorldUtils.getBlock(pos);
+                    if (!blockList.get().contains(block)) continue;
+
+                    event.renderer.box(pos, trapSideColor.get(), trapLineColor.get(), trapShapeMode.get(), 0);
+                }
+            }
+    }
+
+    private void breakBlock(BlockPos pos) {
+        FindItemResult pickaxe = findPickaxe();
+        if (pickaxe.found()) {
+            WrapUtils.updateSlot(pickaxe.slot());
+            PlayerUtilsPlus.doPacketMine(pos);
+        }
+    }
+
+    private FindItemResult findPickaxe() {
+        return InvUtils.findInHotbar(itemStack -> itemStack.getItem() instanceof PickaxeItem);
     }
 
     private void placeTnt(BlockPos pos) {
