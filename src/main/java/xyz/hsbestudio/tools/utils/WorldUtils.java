@@ -2,7 +2,6 @@ package xyz.hsbestudio.tools.utils;
 
 
 import meteordevelopment.meteorclient.mixininterface.IVec3d;
-import meteordevelopment.meteorclient.systems.modules.combat.AnchorAura;
 import meteordevelopment.meteorclient.utils.player.FindItemResult;
 import meteordevelopment.meteorclient.utils.player.InvUtils;
 import meteordevelopment.meteorclient.utils.player.Rotations;
@@ -13,7 +12,10 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.c2s.play.*;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
@@ -103,7 +105,7 @@ public class WorldUtils {
         if (!World.isValid(blockPos)) return false;
 
         // Check if current block is replaceable
-        if (!mc.world.getBlockState(blockPos).getMaterial().isReplaceable()) return false;
+        if (!mc.world.getBlockState(blockPos).isReplaceable()) return false;
 
         // Check if intersects entities
         return !checkEntities || mc.world.canPlace(Blocks.OBSIDIAN.getDefaultState(), blockPos, ShapeContext.absent());
@@ -130,6 +132,19 @@ public class WorldUtils {
         }
 
         return null;
+    }
+
+    public static void interaction(BlockPos pos, FindItemResult item, int preSlot) {
+        if (mc.interactionManager == null) return;
+
+        if (item.isOffhand())
+            mc.interactionManager.interactBlock(mc.player, Hand.OFF_HAND, new BlockHitResult(new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), Direction.UP, pos, true));
+        else {
+            InvUtils.swap(item.slot(), true);
+            mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), Direction.UP, pos, true));
+        }
+
+        InvUtils.swap(preSlot, true);
     }
 
     public static boolean isClickable(Block block) {
@@ -201,7 +216,7 @@ public class WorldUtils {
     // World Utils
 
     public static BlockPos roundBlockPos(Vec3d vec) {
-        return new BlockPos(vec.x, (int) Math.round(vec.y), vec.z);
+        return new BlockPos((int) vec.x, (int) Math.round(vec.y), (int) vec.z);
     }
 
     // Player Utils

@@ -7,7 +7,6 @@ import meteordevelopment.meteorclient.renderer.ShapeMode;
 import meteordevelopment.meteorclient.renderer.text.TextRenderer;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Module;
-import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.meteorclient.utils.entity.EntityUtils;
 import meteordevelopment.meteorclient.utils.entity.SortPriority;
 import meteordevelopment.meteorclient.utils.entity.TargetUtils;
@@ -20,10 +19,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Items;
 import net.minecraft.item.PickaxeItem;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Vector3d;
 import xyz.hsbestudio.tools.DinnerTools;
@@ -143,7 +139,7 @@ public class AnchorAuraPlus extends Module {
 
     private int placeDelayLeft;
     private int breakDelayLeft;
-    public PlayerEntity target;
+    private PlayerEntity target;
     private boolean sentTrapMine;
     private boolean sentBurrowMine;
     private boolean sentAntiStuck;
@@ -327,7 +323,6 @@ public class AnchorAuraPlus extends Module {
             }
             case PredictMovement -> {
                 double yaw = target.getYaw();
-
                 // TODO finish logic
             }
         }
@@ -349,11 +344,11 @@ public class AnchorAuraPlus extends Module {
     }
 
     private boolean getDamagePlace(BlockPos pos) {
-        return placeMode.get() == Safety.Suicide || DamageUtils.bedDamage(mc.player, Utils.vec3d(pos.add(0.5, 0.5, 0.5))) <= maxDamage.get();
+        return placeMode.get() == Safety.Suicide || DamageUtils.bedDamage(mc.player, new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5)) <= maxDamage.get();
     }
 
     private boolean getDamageBreak(BlockPos pos) {
-        return breakMode.get() == Safety.Suicide || DamageUtils.anchorDamage(mc.player, Utils.vec3d(pos.add(0.5, 0.5, 0.5))) <= maxDamage.get();
+        return breakMode.get() == Safety.Suicide || DamageUtils.anchorDamage(mc.player, new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5)) <= maxDamage.get();
     }
 
     private boolean isValidPlace(BlockPos pos) {
@@ -371,21 +366,8 @@ public class AnchorAuraPlus extends Module {
         mc.player.setSneaking(false);
         int preSlot = mc.player.getInventory().selectedSlot;
 
-        interaction(pos, glowStone, preSlot);
-        interaction(pos, anchor, preSlot);
-    }
-
-    private void interaction(BlockPos pos, FindItemResult item, int preSlot) {
-        if (mc.interactionManager == null) return;
-
-        if (item.isOffhand())
-            mc.interactionManager.interactBlock(mc.player, Hand.OFF_HAND, new BlockHitResult(new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), Direction.UP, pos, true));
-        else {
-            InvUtils.swap(item.slot(), true);
-            mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), Direction.UP, pos, true));
-        }
-
-        InvUtils.swap(preSlot, true);
+        WorldUtils.interaction(pos, glowStone, preSlot);
+        WorldUtils.interaction(pos, anchor, preSlot);
     }
 
     @Override

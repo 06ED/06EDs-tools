@@ -27,6 +27,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import xyz.hsbestudio.tools.DinnerTools;
 import xyz.hsbestudio.tools.utils.EntityUtilsPlus;
+import xyz.hsbestudio.tools.utils.PlayerUtilsPlus;
 import xyz.hsbestudio.tools.utils.WorldUtils;
 
 import java.util.ArrayList;
@@ -209,28 +210,17 @@ public class CevBreaker extends Module {
 
         toActivate = new ArrayList<>();
 
-        if (toggleModules.get() && !modules.get().isEmpty() && mc.world != null && mc.player != null) {
-            for (Module module : modules.get()) {
-                if (module.isActive()) {
-                    module.toggle();
-                    toActivate.add(module);
-                }
-            }
-        }
+        PlayerUtilsPlus.togglingModules(toggleModules, modules,  toActivate);
     }
 
     @Override
     public void onDeactivate() {
-        if (toggleBack.get() && !toActivate.isEmpty() && mc.world != null && mc.player != null) {
-            for (Module module : toActivate) {
-                if (!module.isActive()) {
-                    module.toggle();
-                }
-            }
-        }
+        if (toggleBack.get() && !toActivate.isEmpty() && mc.world != null && mc.player != null)
+            for (Module module : toActivate) if (!module.isActive()) module.toggle();
     }
 
     @EventHandler
+    @SuppressWarnings("unused")
     private void onTick(TickEvent.Pre event) {
         if (mc.player == null || mc.world == null || mc.getNetworkHandler() == null || mc.interactionManager == null)
             return;
@@ -396,6 +386,7 @@ public class CevBreaker extends Module {
     }
 
     @EventHandler
+    @SuppressWarnings("unused")
     private void onPacketSend(PacketEvent.Send event) {
         if (event.packet instanceof UpdateSelectedSlotC2SPacket) {
             switchDelayLeft = 1;

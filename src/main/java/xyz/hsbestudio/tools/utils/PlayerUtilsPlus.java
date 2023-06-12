@@ -1,5 +1,7 @@
 package xyz.hsbestudio.tools.utils;
 
+import meteordevelopment.meteorclient.settings.Setting;
+import meteordevelopment.meteorclient.systems.modules.Module;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -7,6 +9,9 @@ import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
 
@@ -38,6 +43,17 @@ public class PlayerUtilsPlus {
         double g = (mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()) - y);
         double h = (mc.player.getZ() - z);
         return Math.sqrt(f * f + g * g + h * h);
+    }
+
+    public static void togglingModules(Setting<Boolean> toggleModules, Setting<List<Module>> modules, ArrayList<Module> toActivate) {
+        if (toggleModules.get() && !modules.get().isEmpty()) {
+            for (Module module : modules.get()) {
+                if (module.isActive()) {
+                    module.toggle();
+                    toActivate.add(module);
+                }
+            }
+        }
     }
 
     public static boolean isTrapBlock(BlockPos pos) {

@@ -5,6 +5,7 @@ import meteordevelopment.meteorclient.events.render.Render3DEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.renderer.ShapeMode;
 import meteordevelopment.meteorclient.settings.*;
+import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.player.Rotations;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import meteordevelopment.meteorclient.utils.world.BlockUtils;
@@ -17,7 +18,6 @@ import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import meteordevelopment.meteorclient.systems.modules.Module;
 import xyz.hsbestudio.tools.DinnerTools;
 import xyz.hsbestudio.tools.utils.WorldUtils;
 
@@ -157,6 +157,7 @@ public class InstaMinePlus extends Module {
     }
 
     @EventHandler
+    @SuppressWarnings("unused")
     private void onStartBreakingBlock(StartBreakingBlockEvent event) {
         direction = event.direction;
         blockPos.set(event.blockPos);
@@ -187,25 +188,21 @@ public class InstaMinePlus extends Module {
         }
 
         if (ticksPassed < 1) ticksPassed++;
-        else {
-            if (!mc.world.getBlockState(blockPos).isOf(Blocks.AIR)) {
-                updated = false;
-                ticksPassed = 0;
-            }
+        else if (!mc.world.getBlockState(blockPos).isOf(Blocks.AIR)) {
+            updated = false;
+            ticksPassed = 0;
         }
+
 
         if (ticks >= getDelay()) {
             ticks = 0;
 
             if (shouldMine()) {
-                if (rotate.get()) {
+                if (rotate.get())
                     Rotations.rotate(Rotations.getYaw(blockPos), Rotations.getPitch(blockPos), () -> mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockPos, direction)));
-                } else {
+                else
                     mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockPos, direction));
-                }
-
                 mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
-
             }
         } else ticks++;
     }
@@ -222,7 +219,8 @@ public class InstaMinePlus extends Module {
     @EventHandler
     @SuppressWarnings("unused")
     private void onRender(Render3DEvent event) {
-        if (!render.get() || (!shouldMine() && !renderAlways.get()) && WorldUtils.getBlock(blockPos) == Blocks.BEDROCK) return;
+        if (!render.get() || (!shouldMine() && !renderAlways.get()) && WorldUtils.getBlock(blockPos) == Blocks.BEDROCK)
+            return;
         event.renderer.box(blockPos, sideColor.get(), lineColor.get(), shapeMode.get(), 0);
     }
 }

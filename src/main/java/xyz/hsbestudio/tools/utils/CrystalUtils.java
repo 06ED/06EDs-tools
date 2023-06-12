@@ -26,6 +26,7 @@ public class CrystalUtils {
 
     public static void attackCrystal(Entity entity) {
         if (mc.player == null || mc.getNetworkHandler() == null) return;
+
         // Attack
         mc.player.networkHandler.sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
 

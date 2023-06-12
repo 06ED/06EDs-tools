@@ -1098,6 +1098,7 @@ public class CrystalAuraPlus extends Module {
     }
 
     @EventHandler(priority = EventPriority.HIGH)
+    @SuppressWarnings("unused")
     private void onPreTick(TickEvent.Pre event) {
         // Decrement render timers
         if (renderTimer > 0) renderTimer--;
@@ -1154,6 +1155,8 @@ public class CrystalAuraPlus extends Module {
             return;
         }
 
+        if (mc.player == null || mc.world == null) return;
+
         // Set player eye pos
         ((IVec3d) playerEyePos).set(mc.player.getPos().x, mc.player.getPos().y + mc.player.getEyeHeight(mc.player.getPose()), mc.player.getPos().z);
 
@@ -1171,7 +1174,7 @@ public class CrystalAuraPlus extends Module {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST - 666)
+    @EventHandler(priority = EventPriority.LOWEST - 600)
     private void onPreTickLast(TickEvent.Pre event) {
         // Rotate to last rotation
         if (rotate.get() && lastRotationTimer < getLastRotationStopDelay() && !didRotateThisTick) {
@@ -1180,6 +1183,7 @@ public class CrystalAuraPlus extends Module {
     }
 
     @EventHandler
+    @SuppressWarnings("unused")
     private void onEntityAdded(EntityAddedEvent event) {
         if (!(event.entity instanceof EndCrystalEntity)) return;
 
@@ -1401,7 +1405,7 @@ public class CrystalAuraPlus extends Module {
             // Check for support
             if (!hasBlock) {
                 if (isSupport.get()) {
-                    if (!blockState.getMaterial().isReplaceable()) return;
+                    if (!blockState.isReplaceable()) return;
                 } else return;
             }
 

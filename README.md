@@ -14,3 +14,5 @@
 - RadiusAutoWalk
 - RPC
 - FastThrowXP
+
+### P.S. this branch are using for testing new features -> it is unstable

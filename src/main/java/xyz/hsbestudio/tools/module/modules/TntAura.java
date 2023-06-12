@@ -23,6 +23,7 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import xyz.hsbestudio.tools.DinnerTools;
 import xyz.hsbestudio.tools.utils.PlayerUtilsPlus;
 import xyz.hsbestudio.tools.utils.WorldUtils;
@@ -175,11 +176,12 @@ public class TntAura extends Module {
         super(DinnerTools.CATEGORY, "TNT-aura", "Automatically traps player and blown up him by tnt.");
     }
 
-    public PlayerEntity target;
+    private PlayerEntity target;
     private TrapStructure structure;
     private int tickTrapDelay;
     private int tickPlaceDelay;
     private int tickBlownUpDelay;
+    private boolean packetMineSend;
 
     @Override
     public void onActivate() {
@@ -188,6 +190,7 @@ public class TntAura extends Module {
         tickTrapDelay = 0;
         tickPlaceDelay = 0;
         tickBlownUpDelay = 0;
+        packetMineSend = false;
     }
 
     @EventHandler
@@ -203,8 +206,10 @@ public class TntAura extends Module {
         if (PlayerUtils.shouldPause(pauseOnMine.get(), pauseOnEat.get(), pauseOnDrink.get())) return;
 
         // Anti stuck
-        BlockPos tntPos = new BlockPos(target.getPos()).up(2);
-        if (antiStuck.get() && WorldUtils.getBlock(tntPos) != Blocks.TNT) breakBlock(tntPos);
+        BlockPos tntPos = new BlockPos(target.getBlockX(), target.getBlockY(), target.getBlockZ()).up(2);
+        Block block = WorldUtils.getBlock(tntPos);
+        if (antiStuck.get() && (block != Blocks.TNT || block != Blocks.AIR) && !packetMineSend) breakBlock(tntPos);
+        if (packetMineSend && (block != Blocks.TNT || block != Blocks.AIR)) packetMineSend = false;
 
         if (structure == null) structure = new TrapStructure(target, blockList.get());
 
@@ -229,13 +234,13 @@ public class TntAura extends Module {
         if (target == null) return;
 
         if (renderTnt.get())
-            event.renderer.box(new BlockPos(target.getPos()).up(2), tntSideColor.get(), tntLineColor.get(), tntShapeMode.get(), 0);
+            event.renderer.box(new BlockPos(new Vec3i(target.getBlockX(), target.getBlockY(), target.getBlockZ())).up(2), tntSideColor.get(), tntLineColor.get(), tntShapeMode.get(), 0);
 
         if (renderTrap.get())
             for (int i = 0; i < 3; i++) {
-                double x = target.getX();
-                double z = target.getZ();
-                double y = target.getY();
+                int x = (int) target.getX();
+                int z = (int) target.getZ();
+                int y = (int) target.getY();
 
                 List<BlockPos> surroundPoses = List.of(
                     new BlockPos(x + 1, y + i, z),
@@ -258,6 +263,7 @@ public class TntAura extends Module {
         if (pickaxe.found()) {
             WrapUtils.updateSlot(pickaxe.slot());
             PlayerUtilsPlus.doPacketMine(pos);
+            packetMineSend = true;
         }
     }
 
@@ -297,18 +303,20 @@ public class TntAura extends Module {
     private record TrapStructure(PlayerEntity target, List<Block> allowedBlocksToPlace) {
         public void build(boolean rotate) {
             // Place block under player
-            place(new BlockPos(target.getPos().add(0, -1, 0)), rotate);
+            Vec3d underVector = target.getPos().add(0, -1, 0);
+            place(new BlockPos((int) underVector.x, (int) underVector.y, (int) underVector.z), rotate);
 
             // Place surround
             for (int i = 0; i < 3; i++) createSurround(target.getBlockY() + i, rotate);
 
             // Place block above player
-            place(new BlockPos(target.getPos().add(0, 3, 0)), rotate);
+            Vec3d aboveVector = target.getPos().add(0, 3, 0);
+            place(new BlockPos(new Vec3i((int) aboveVector.x, (int) aboveVector.y, (int) aboveVector.z)), rotate);
         }
 
         private void createSurround(int y, boolean rotate) {
-            double x = target.getX();
-            double z = target.getZ();
+            int x = (int) target.getX();
+            int z = (int) target.getZ();
 
             List<BlockPos> surroundPoses = List.of(
                 new BlockPos(x + 1, y, z),

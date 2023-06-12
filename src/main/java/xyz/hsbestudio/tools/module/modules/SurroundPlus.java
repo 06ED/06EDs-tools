@@ -29,6 +29,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import xyz.hsbestudio.tools.DinnerTools;
 import xyz.hsbestudio.tools.utils.EntityUtilsPlus;
+import xyz.hsbestudio.tools.utils.PlayerUtilsPlus;
 import xyz.hsbestudio.tools.utils.PositionUtils;
 import xyz.hsbestudio.tools.utils.WorldUtils;
 
@@ -477,14 +478,7 @@ public class SurroundPlus extends Module {
             else PlayerUtils.centerPlayer();
         }
 
-        if (toggleModules.get() && !modules.get().isEmpty() && mc.world != null && mc.player != null) {
-            for (Module module : modules.get()) {
-                if (module.isActive()) {
-                    module.toggle();
-                    toActivate.add(module);
-                }
-            }
-        }
+        PlayerUtilsPlus.togglingModules(toggleModules, modules, toActivate);
 
         for (RenderBlock renderBlock : renderBlocks) renderBlockPool.free(renderBlock);
         renderBlocks.clear();
@@ -722,11 +716,11 @@ public class SurroundPlus extends Module {
     }
 
     private boolean allAir(BlockPos... pos) {
-        return Arrays.stream(pos).allMatch(blockPos -> mc.world.getBlockState(blockPos).getMaterial().isReplaceable());
+        return Arrays.stream(pos).allMatch(blockPos -> mc.world.getBlockState(blockPos).isReplaceable());
     }
 
     private boolean anyAir(BlockPos... pos) {
-        return Arrays.stream(pos).anyMatch(blockPos -> mc.world.getBlockState(blockPos).getMaterial().isReplaceable());
+        return Arrays.stream(pos).anyMatch(blockPos -> mc.world.getBlockState(blockPos).isReplaceable());
     }
 
     private FindItemResult getTargetBlock() {
